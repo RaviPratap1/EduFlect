@@ -12,4 +12,4 @@ router.get("/get-profile", authMiddleware, getProfile);
 router.put("/update-profile", authMiddleware, updateProfile);
 
 
-module.exports = router;    
+module.exports = router;        

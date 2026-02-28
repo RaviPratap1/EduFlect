@@ -12,11 +12,14 @@ const authMiddleware = async (req, res, next) => {
     const token = authHeader.split(" ")[1];
 
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const user = await User.findById(decoded.id).select("-password");
-        console.log(decoded);
+        const decode = jwt.verify(token, process.env.JWT_SECRET);
+
+        console.log("decode",decode);
         
-        console.log(user);
+        const user = await User.findById(decode.id).select("-password");
+        console.log("user", user);
+        
+       
         
         if (!user) {
             return res.status(401).json({ message: "Unauthorized: User not found" });
