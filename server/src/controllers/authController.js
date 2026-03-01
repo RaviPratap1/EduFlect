@@ -26,9 +26,15 @@ const sendOtp = async (email, purpose = "verify") => {
 
     // Optional security check (don't reveal if email exists)
     const user = await User.findOne({ email: normalizedEmail });
+
+    // ✅ User nahi mila toh clearly batao
     if (!user) {
-      return { success: true };
+      return {
+        success: false,
+        message: "Email not registered"
+      };
     }
+
 
     const otp = generateOtp();
 
@@ -70,12 +76,6 @@ const sendOtp = async (email, purpose = "verify") => {
 /* =====================================================
    SIGNUP
 ===================================================== */
-
-
-
-
-
-
 exports.signup = async (req, res) => {
   try {
     const {
@@ -244,7 +244,7 @@ exports.verifyOtp = async (req, res) => {
           email: user.email,
           role: user.role,
         },
-        
+
       },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
@@ -341,7 +341,7 @@ exports.login = async (req, res) => {
       {
         id: user._id,
         role: user.role,
-         profile: {
+        profile: {
           _id: user._id,
           firstName: user.firstName,
           lastName: user.lastName,

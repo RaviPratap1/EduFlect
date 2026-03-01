@@ -1,0 +1,2 @@
+client/
+server/note.txt

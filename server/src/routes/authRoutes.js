@@ -1,31 +1,37 @@
+// routes/paymentRoutes.js
 const express = require("express");
 const router = express.Router();
-const { signup, verifyOtp,resendOtp, resetPassword, forgotPassword, login,changePassword } = require("../controllers/authController");
+const {
+  createOrder,
+  verifyPayment,
+  getMyOrders,
+} = require("../controllers/paymentController");
+const {
+  authMiddleware,
+  studentMiddleware,
+} = require("../middleware/auth.middleware");
 
-const {authMiddleware} = require("../middleware/auth.middleware");
+// Order create — sirf student
+router.post(
+  "/create-order",
+  authMiddleware,
+  studentMiddleware,
+  createOrder
+);
 
-// ✅ Signup route
-router.post("/signup", signup);
+// Payment verify — sirf student
+router.post(
+  "/verify-payment",
+  authMiddleware,
+  studentMiddleware,
+  verifyPayment
+);
 
-// ✅ Verify OTP route
-router.post("/verify-otp", verifyOtp);
-
-// ✅ Resend OTP route
-router.post("/resend-otp", resendOtp);
-
-// ✅ Forgot Password route
-router.post("/forgot-password", forgotPassword);
-
-// ✅ Reset Password route
-router.post("/reset-password", resetPassword);
-
-// ✅ Change Password route (Protected)
-router.post("/change-password", authMiddleware, changePassword);
-
-
-// ✅ Login route
-router.post("/login", login);
-
-
+// My orders — koi bhi logged in user
+router.get(
+  "/my-orders",
+  authMiddleware,
+  getMyOrders
+);
 
 module.exports = router;

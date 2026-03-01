@@ -8,6 +8,7 @@ const courseRoutes = require("./routes/courseRoutes");
 const sectionRoutes = require("./routes/sectionRoutes");
 const subSectionRoutes = require("./routes/subSectionRoutes");
 const rating = require("./routes/ratingRoutes")
+const paymentRoutes    = require("./routes/paymentRoutes");
 
 const cors = require("cors");
 
@@ -30,6 +31,14 @@ app.use(fileUpload({
 }));
 
 
+app.use((err, req, res, next) => {
+  res.status(err.statusCode || 500).json({
+    success: false,
+    message: err.message || "Server error"
+  });
+});
+
+
 // Routes
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/profile", profileRoutes);
@@ -38,6 +47,7 @@ app.use("/api/v1/courses", courseRoutes);
 app.use("/api/v1/sections", sectionRoutes);
 app.use("/api/v1/subsections", subSectionRoutes);
 app.use("/api/v1/rating", rating);
+app.use("/api/v1/payment",     paymentRoutes);
 
 
 
