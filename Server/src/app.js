@@ -19,12 +19,36 @@ const app = express();
 app.use(helmet());
 app.use(cookieParser());
 
+// app.use((req, res, next) => {
+//   console.log("Origin:", req.headers.origin);
+//   next();
+// });
+
+// app.use(cors({
+//   origin: function(origin, callback) {
+//     const allowedOrigins = [
+//       "http://localhost:5174",
+//       "http://localhost:5173",
+//       process.env.CLIENT_URL,
+//     ];
+//     if (!origin || allowedOrigins.includes(origin)) {
+//       callback(null, true);
+//     } else {
+//       callback(new Error("Not allowed by CORS"));
+//     }
+//   },
+//   credentials: true,
+// }));
+
+// app.use(cors());
+
 app.use(cors({
   origin: function(origin, callback) {
     const allowedOrigins = [
       "http://localhost:5173",
+      "http://localhost:5174",
       process.env.CLIENT_URL,
-    ];
+    ].filter(Boolean);
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
@@ -32,6 +56,8 @@ app.use(cors({
     }
   },
   credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
 }));
 
 // ─── BODY PARSING ─────────────────────────────────────────────
