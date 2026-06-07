@@ -1,6 +1,6 @@
-import axios from 'axios';
+import axios from "axios";
 
-const BASE_URL = import.meta.env.VITE_API_URL + '/api/v1';
+const BASE_URL = import.meta.env.VITE_API_URL + "/api/v1";
 
 const api = axios.create({
   baseURL: BASE_URL,
@@ -12,11 +12,11 @@ const api = axios.create({
 // Har request ke saath access token attach karo
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('accessToken');
+    const token = localStorage.getItem("accessToken");
     if (token) config.headers.Authorization = `Bearer ${token}`;
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
 // ── RESPONSE INTERCEPTOR ──────────────────────────────────────
@@ -30,18 +30,18 @@ const processQueue = (error, token = null) => {
 };
 
 const clearAuthAndRedirect = () => {
-  localStorage.removeItem('accessToken');
+  localStorage.removeItem("accessToken");
 
   // Protected routes pe hi redirect karo — home page pe nahi
-  const protectedPrefixes = ['/dashboard', '/learn'];
+  const protectedPrefixes = ["/dashboard", "/learn"];
   const isProtected = protectedPrefixes.some((r) =>
-    window.location.pathname.startsWith(r)
+    window.location.pathname.startsWith(r),
   );
 
   if (isProtected) {
     // Hard redirect avoid karne ke liye — Redux dispatch ya navigate use karo
     // Yahan window.location use karna last resort hai
-    window.location.replace('/login');
+    window.location.replace("/login");
   }
 };
 
@@ -51,8 +51,12 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // Sirf 401 handle karo, aur infinite loop se bachao (_retry flag)
-    if (error.response?.status !== 401 || originalRequest._retry) {
+    if (
+      error.response?.status !== 401 ||
+      originalRequest._retry ||
+      originalRequest.url?.includes("/auth/login") ||
+      originalRequest.url?.includes("/auth/register")
+    ) {
       return Promise.reject(error);
     }
 
@@ -74,11 +78,11 @@ api.interceptors.response.use(
 
     try {
       // ✅ Sahi URL — BASE_URL use karo, alag axios instance nahi
-      const { data } = await api.post('/auth/refresh-token');
+      const { data } = await api.post("/auth/refresh-token");
       const newToken = data.data.accessToken;
 
       // Naya token save karo
-      localStorage.setItem('accessToken', newToken);
+      localStorage.setItem("accessToken", newToken);
       api.defaults.headers.common.Authorization = `Bearer ${newToken}`;
 
       // Queue mein baaki requests ko resolve karo
@@ -87,17 +91,15 @@ api.interceptors.response.use(
       // Original failed request retry karo
       originalRequest.headers.Authorization = `Bearer ${newToken}`;
       return api(originalRequest);
-
     } catch (refreshError) {
       // Refresh bhi fail ho gaya — logout karo
       processQueue(refreshError, null);
       clearAuthAndRedirect();
       return Promise.reject(refreshError);
-
     } finally {
       isRefreshing = false;
     }
-  }
+  },
 );
 
 export default api;

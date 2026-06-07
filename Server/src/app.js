@@ -19,28 +19,6 @@ const app = express();
 app.use(helmet());
 app.use(cookieParser());
 
-// app.use((req, res, next) => {
-//   console.log("Origin:", req.headers.origin);
-//   next();
-// });
-
-// app.use(cors({
-//   origin: function(origin, callback) {
-//     const allowedOrigins = [
-//       "http://localhost:5174",
-//       "http://localhost:5173",
-//       process.env.CLIENT_URL,
-//     ];
-//     if (!origin || allowedOrigins.includes(origin)) {
-//       callback(null, true);
-//     } else {
-//       callback(new Error("Not allowed by CORS"));
-//     }
-//   },
-//   credentials: true,
-// }));
-
-// app.use(cors());
 
 app.use(cors({
   origin: function(origin, callback) {
@@ -91,6 +69,8 @@ app.use((req, res) => {
 // ─── EMAIL CONFIG ─────────────────────────────────────────────
 require('./config/email.config');
 
+
+
 // ─── GLOBAL ERROR HANDLER ─────────────────────────────────────
 app.use((err, req, res, next) => {
   const statusCode = err.statusCode || 500;
@@ -123,5 +103,7 @@ app.use((err, req, res, next) => {
     ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
   });
 });
+
+
 
 module.exports = app;
