@@ -13,28 +13,25 @@ exports.createOrder = async (req, res) => {
       key_id: process.env.RAZORPAY_KEY_ID,
       key_secret: process.env.RAZORPAY_KEY_SECRET,
     });
+
     const course = await Course.findById(courseId);
     if (!course)
       return res
         .status(404)
         .json({ success: false, message: "Course not found" });
     if (!course.isPublished)
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Course is not available for purchase",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Course is not available for purchase",
+      });
     const alreadyEnrolled = course.studentsEnrolled.some(
       (s) => s.toString() === userId.toString(),
     );
     if (alreadyEnrolled)
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "You are already enrolled in this course",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "You are already enrolled in this course",
+      });
     const effectivePrice =
       course.price - Math.round((course.price * (course.discount || 0)) / 100);
     try {
@@ -52,35 +49,29 @@ exports.createOrder = async (req, res) => {
         currency: "INR",
         status: "created",
       });
-      return res
-        .status(200)
-        .json({
-          success: true,
-          message: "Order created",
-          data: {
-            orderId: order.id,
-            currency: order.currency,
-            amount: order.amount,
-            courseName: course.name,
-            courseId: course._id,
-            keyId: process.env.RAZORPAY_KEY_ID,
-          },
-        });
+      return res.status(200).json({
+        success: true,
+        message: "Order created",
+        data: {
+          orderId: order.id,
+          currency: order.currency,
+          amount: order.amount,
+          courseName: course.name,
+          courseId: course._id,
+          keyId: process.env.RAZORPAY_KEY_ID,
+        },
+      });
     } catch (razorpayError) {
-      return res
-        .status(500)
-        .json({
-          success: false,
-          message: razorpayError?.error?.description || razorpayError.message,
-        });
+      return res.status(500).json({
+        success: false,
+        message: razorpayError?.error?.description || razorpayError.message,
+      });
     }
   } catch (err) {
-    return res
-      .status(500)
-      .json({
-        success: false,
-        message: err.message || "Internal Server Error",
-      });
+    return res.status(500).json({
+      success: false,
+      message: err.message || "Internal Server Error",
+    });
   }
 };
 
@@ -103,12 +94,10 @@ exports.verifyPayment = async (req, res) => {
         { razorpayOrderId: razorpay_order_id },
         { status: "failed" },
       );
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Payment verification failed — invalid signature",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Payment verification failed — invalid signature",
+      });
     }
     await Payment.findOneAndUpdate(
       { razorpayOrderId: razorpay_order_id },
@@ -129,19 +118,15 @@ exports.verifyPayment = async (req, res) => {
       { user: userId, course: courseId },
       { upsert: true, new: true },
     );
-    return res
-      .status(200)
-      .json({
-        success: true,
-        message: "Payment verified and enrollment successful! 🎉",
-      });
+    return res.status(200).json({
+      success: true,
+      message: "Payment verified and enrollment successful! 🎉",
+    });
   } catch (err) {
-    return res
-      .status(500)
-      .json({
-        success: false,
-        message: err.message || "Internal Server Error",
-      });
+    return res.status(500).json({
+      success: false,
+      message: err.message || "Internal Server Error",
+    });
   }
 };
 
@@ -154,12 +139,10 @@ exports.getPaymentHistory = async (req, res) => {
       .status(200)
       .json({ success: true, message: "Payment history", data: payments });
   } catch (err) {
-    return res
-      .status(500)
-      .json({
-        success: false,
-        message: err.message || "Internal Server Error",
-      });
+    return res.status(500).json({
+      success: false,
+      message: err.message || "Internal Server Error",
+    });
   }
 };
 
@@ -176,19 +159,15 @@ exports.getAllPayments = async (req, res) => {
         .limit(Number(limit)),
       Payment.countDocuments(),
     ]);
-    return res
-      .status(200)
-      .json({
-        success: true,
-        message: "All payments fetched",
-        data: { payments, total },
-      });
+    return res.status(200).json({
+      success: true,
+      message: "All payments fetched",
+      data: { payments, total },
+    });
   } catch (err) {
-    return res
-      .status(500)
-      .json({
-        success: false,
-        message: err.message || "Internal Server Error",
-      });
+    return res.status(500).json({
+      success: false,
+      message: err.message || "Internal Server Error",
+    });
   }
 };

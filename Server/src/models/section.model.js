@@ -5,11 +5,11 @@ const sectionSchema = new mongoose.Schema(
     name: {
       type: String,
       required: true,
-      trim: true
+      trim: true,
     },
     description: {
       type: String,
-      trim: true
+      trim: true,
     },
     course: {
       type: mongoose.Schema.Types.ObjectId,
@@ -19,10 +19,13 @@ const sectionSchema = new mongoose.Schema(
     subSections: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "SubSection"
-      }
+        ref: "SubSection",
+      },
     ],
-    order: { type: Number, default: 0 },
+    order: {
+      type: Number,
+      default: 0,
+    },
   },
   { timestamps: true },
 );

@@ -414,9 +414,9 @@ const ReviewsSlider = ({ reviews = [], avgRating }) => {
             <div key={review._id} className="relative p-6 transition-shadow bg-white border border-gray-100 rounded-2xl hover:shadow-md">
               <Quote className="absolute w-8 h-8 text-primary-100 top-4 right-4" />
               <div className="flex items-center gap-3 mb-4">
-                <div className="flex items-center justify-center overflow-hidden text-sm font-bold text-white rounded-full w-11 h-11 bg-gradient-to-br from-primary-400 to-indigo-500 shrink-0">
+                <div className="flex items-center justify-center overflow-hidden text-sm font-bold text-white bg-gray-300 rounded-full w-11 h-11 bg-gradient-to-br from-primary-400 to-indigo-500 shrink-0">
                   {review.user?.profile?.avatar
-                    ? <img src={review.user.profile.avatar} alt="" className="object-cover w-full h-full" />
+                    ? <img src={review.user.profile.avatar} alt="" className="object-cover w-full h-full " />
                     : `${review.user?.firstName?.[0]}${review.user?.lastName?.[0]}`}
                 </div>
                 <div>
@@ -518,6 +518,7 @@ export default function HomePage() {
   const { list: categories, fetchCategories } = useCategories();
   const [reviews, setReviews] = useState([]);
   const [faculty, setFaculty] = useState([]);
+  console.log("review", reviews);
 
   useEffect(() => {
     fetchCourses({ limit: 12, sort: 'newest' });

@@ -57,7 +57,14 @@ exports.getCourseReviews = async (req, res) => {
   try {
     const { courseId } = req.params;
     const reviews = await RatingAndReview.find({ course: courseId })
-      .populate("user", "firstName lastName profile")
+      .populate({
+        path: "user",
+        select: "firstName lastName profile",
+        populate: {
+          path: "profile",
+          select: "avatar",
+        },
+      })
       .sort("-createdAt");
     const avg = reviews.length
       ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
@@ -116,7 +123,14 @@ exports.deleteReview = async (req, res) => {
 exports.getAllReviews = async (req, res) => {
   try {
     const reviews = await RatingAndReview.find({ rating: { $gte: 4 } })
-      .populate("user", "firstName lastName profile")
+      .populate({
+        path: "user",
+        select: "firstName lastName profile",
+        populate: {
+          path: "profile",
+          select: "avatar",
+        },
+      })
       .populate("course", "name thumbnail")
       .sort("-createdAt")
       .limit(10);

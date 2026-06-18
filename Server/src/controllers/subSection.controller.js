@@ -19,14 +19,17 @@ const checkSectionOwnership = async (sectionId, userId, userRole) => {
 
 exports.createSubSection = async (req, res) => {
   try {
-    const { name, description, content, sectionId, duration, order } = req.body;
+    const { name, description, sectionId, order } = req.body;
     const section = await checkSectionOwnership(
       sectionId,
       req.user._id,
       req.user.role,
     );
+
     let videoUrl = null,
-      videoPublicId = null;
+      videoPublicId = null,
+      videoDuration = 0;
+
     if (req.file) {
       const uploaded = await uploadOnCloudinary(req.file.path);
       if (!uploaded)
@@ -35,16 +38,16 @@ exports.createSubSection = async (req, res) => {
           .json({ success: false, message: "Video upload failed" });
       videoUrl = uploaded.secure_url;
       videoPublicId = uploaded.public_id;
+      // console.log("Uploaded Video:", uploaded.duration + " seconds");
+      videoDuration = Math.round(uploaded.duration) || 0;
     }
     const subSection = await SubSection.create({
       name,
       description,
-      content,
       videoUrl,
       videoPublicId,
       section: sectionId,
-      duration: Number(duration) || 0,
-      order: Number(order) || 0,
+      duration: videoDuration,
     });
     section.subSections.push(subSection._id);
     await section.save();
@@ -53,12 +56,10 @@ exports.createSubSection = async (req, res) => {
       .json({ success: true, message: "SubSection created", data: subSection });
   } catch (err) {
     const status = err.status || 500;
-    return res
-      .status(status)
-      .json({
-        success: false,
-        message: err.message || "Internal Server Error",
-      });
+    return res.status(status).json({
+      success: false,
+      message: err.message || "Internal Server Error",
+    });
   }
 };
 
@@ -75,6 +76,18 @@ exports.updateSubSection = async (req, res) => {
       req.user._id,
       req.user.role,
     );
+    
+    if (req.file) {
+      const uploaded = await uploadOnCloudinary(req.file.path);
+      if (!uploaded)
+        return res
+          .status(500)
+          .json({ success: false, message: "Video upload failed" });
+      req.body.videoUrl = uploaded.secure_url;
+      req.body.videoPublicId = uploaded.public_id;
+      req.body.duration = Math.round(uploaded.duration) || 0;
+    }
+
     const updated = await SubSection.findByIdAndUpdate(subSectionId, req.body, {
       new: true,
     });
@@ -83,12 +96,10 @@ exports.updateSubSection = async (req, res) => {
       .json({ success: true, message: "SubSection updated", data: updated });
   } catch (err) {
     const status = err.status || 500;
-    return res
-      .status(status)
-      .json({
-        success: false,
-        message: err.message || "Internal Server Error",
-      });
+    return res.status(status).json({
+      success: false,
+      message: err.message || "Internal Server Error",
+    });
   }
 };
 
@@ -114,11 +125,9 @@ exports.deleteSubSection = async (req, res) => {
       .json({ success: true, message: "SubSection deleted" });
   } catch (err) {
     const status = err.status || 500;
-    return res
-      .status(status)
-      .json({
-        success: false,
-        message: err.message || "Internal Server Error",
-      });
+    return res.status(status).json({
+      success: false,
+      message: err.message || "Internal Server Error",
+    });
   }
 };
