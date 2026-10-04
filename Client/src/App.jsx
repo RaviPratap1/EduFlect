@@ -9,8 +9,8 @@ import HomePage from './pages/home/HomePage';
 import CoursesPage from './pages/course/CoursesPage';
 import CourseDetailPage from './pages/course/CourseDetailPage';
 import CoursePlayerPage from './pages/course/CoursePlayerPage';
-import ContactPage from './pages/extraInfo/ContactPage';
-import AboutPage from './pages/extraInfo/AboutPge';
+import ContactPage from './pages/extraoage/ContactPage';
+import AboutPage from './pages/extraoage/AboutPge';
 
 import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';

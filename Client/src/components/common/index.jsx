@@ -21,7 +21,7 @@ export const StarRating = ({ value = 0, max = 5, size = 'sm' }) => {
           className={`${s} ${i < Math.round(value) ? 'text-amber-400 fill-amber-400' : 'text-gray-300'}`}
         />
       ))}
-      <span className="text-sm text-gray-600 ml-1">{Number(value).toFixed(1)}</span>
+      <span className="ml-1 text-sm text-gray-600">{Number(value).toFixed(1)}</span>
     </div>
   );
 };
@@ -29,35 +29,44 @@ export const StarRating = ({ value = 0, max = 5, size = 'sm' }) => {
 export const CourseCard = ({ course }) => {
   const price = course.price - Math.round((course.price * (course.discount || 0)) / 100);
   return (
-    <Link to={`/courses/${course._id}`} className="card overflow-hidden hover:shadow-md transition-shadow group flex flex-col">
-      <div className="relative overflow-hidden aspect-video bg-gray-100">
+    <Link to={`/courses/${course._id}`} className="flex flex-col overflow-hidden transition-shadow card hover:shadow-md group">
+      <div className="relative overflow-hidden bg-gray-100 aspect-video">
         {course.thumbnail ? (
-          <img src={course.thumbnail} alt={course.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+          <img src={course.thumbnail} alt={course.name} className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105" />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-primary-100 to-primary-200 flex items-center justify-center">
+          <div className="flex items-center justify-center w-full h-full bg-gradient-to-br from-primary-100 to-primary-200">
             <BookOpen className="w-12 h-12 text-primary-400" />
           </div>
         )}
         {course.discount > 0 && (
           <span className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">{course.discount}% OFF</span>
         )}
-        <span className="absolute top-2 right-2 badge bg-gray-900/70 text-white capitalize">{course.level}</span>
+        <span className="absolute text-white capitalize top-2 right-2 badge bg-gray-900/70">{course.level}</span>
       </div>
-      <div className="p-4 flex flex-col flex-1">
-        <p className="text-xs text-primary-600 font-medium mb-1">{course.category?.name || 'Uncategorized'}</p>
-        <h3 className="font-semibold text-gray-900 line-clamp-2 mb-2 flex-1">{course.name}</h3>
-        <p className="text-xs text-gray-500 mb-2">
+      <div className="flex flex-col flex-1 p-4">
+        <p className="mb-1 text-xs font-medium text-primary-600">{course.category?.name || 'Uncategorized'}</p>
+        <h3 className="flex-1 mb-2 font-semibold text-gray-900 line-clamp-2">{course.name}</h3>
+        <p className="mb-2 text-xs text-gray-500">
           By {course.instructor?.firstName} {course.instructor?.lastName}
         </p>
-        <div className="flex items-center gap-3 text-xs text-gray-500 mb-3">
+        <div className="flex items-center gap-3 mb-3 text-xs text-gray-500">
           <span className="flex items-center gap-1"><Users className="w-3.5 h-3.5" />{course.totalStudents || course.studentsEnrolled?.length || 0}</span>
           <span className="flex items-center gap-1"><Star className="w-3.5 h-3.5 text-amber-400" />{Number(course.averageRating || 0).toFixed(1)}</span>
         </div>
         <div className="flex items-center justify-between pt-2 border-t border-gray-100">
           <div>
-            <span className="text-lg font-bold text-gray-900">₹{price.toLocaleString()}</span>
-            {course.discount > 0 && (
-              <span className="text-sm text-gray-400 line-through ml-2">₹{course.price?.toLocaleString()}</span>
+
+            {/* add if course price is 0 then show free else show price with discount if any */}
+            {price === 0 ? (
+              <span className="text-sm font-semibold text-blue-600">Free</span>
+            ) : (
+              <div className="flex items-center gap-2">
+               
+                <span className="text-sm font-semibold text-gray-900">₹{price}</span>
+                 {course.discount > 0 && (
+                  <span className="text-sm font-medium text-gray-500 line-through">₹{course.price}</span>
+                )}
+              </div>
             )}
           </div>
           <span className="badge bg-primary-50 text-primary-700">View</span>
@@ -68,10 +77,10 @@ export const CourseCard = ({ course }) => {
 };
 
 export const EmptyState = ({ icon: Icon, title, description, action }) => (
-  <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
+  <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
     {Icon && <Icon className="w-16 h-16 text-gray-300" />}
     <h3 className="text-xl font-semibold text-gray-700">{title}</h3>
-    {description && <p className="text-gray-500 max-w-sm">{description}</p>}
+    {description && <p className="max-w-sm text-gray-500">{description}</p>}
     {action}
   </div>
 );
@@ -79,11 +88,11 @@ export const EmptyState = ({ icon: Icon, title, description, action }) => (
 export const Modal = ({ isOpen, onClose, title, children }) => {
   if (!isOpen) return null;
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-5 border-b border-gray-100">
           <h2 className="text-lg font-semibold">{title}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+          <button onClick={onClose} className="text-2xl leading-none text-gray-400 hover:text-gray-600">&times;</button>
         </div>
         <div className="p-5">{children}</div>
       </div>
@@ -94,7 +103,7 @@ export const Modal = ({ isOpen, onClose, title, children }) => {
 export const ProgressBar = ({ value, className = '' }) => (
   <div className={`w-full bg-gray-200 rounded-full h-2 ${className}`}>
     <div
-      className="bg-primary-600 h-2 rounded-full transition-all duration-500"
+      className="h-2 transition-all duration-500 rounded-full bg-primary-600"
       style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
     />
   </div>
@@ -108,7 +117,7 @@ export const StatCard = ({ icon: Icon, label, value, color = 'primary', trend })
     red: 'bg-red-50 text-red-600',
   };
   return (
-    <div className="card p-5">
+    <div className="p-5 card">
       <div className="flex items-start justify-between mb-3">
         <div className={`p-2.5 rounded-xl ${colors[color]}`}>
           <Icon className="w-5 h-5" />

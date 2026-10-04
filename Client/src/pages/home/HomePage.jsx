@@ -282,7 +282,7 @@ const FeaturesSection = () => (
 );
 
 // ── COURSE SLIDER ─────────────────────────────────────────────
-const CourseSlider = ({ courses = [], loading }) => {
+const CourseSlider = ({ courses = [], loading, error, onRetry }) => {
   const totalPages = Math.max(1, Math.ceil((courses?.length ?? 0) / 4));
   const { current, prev, next, goTo } = useAutoSlider(totalPages, 3500);
   const itemsPerPage = 4;
@@ -311,7 +311,14 @@ const CourseSlider = ({ courses = [], loading }) => {
           </div>
         </div>
 
-        {loading ? <Spinner size="lg" className="py-16" /> : (
+        {loading ? <Spinner size="lg" className="py-16" /> : error ? (
+          <div className="py-10 text-center">
+            <p className="mb-3 text-sm text-gray-500">{error}</p>
+            <button onClick={onRetry} className="btn-secondary">Try again</button>
+          </div>
+        ) : courses.length === 0 ? (
+          <p className="py-10 text-center text-sm text-gray-500">No courses available yet.</p>
+        ) : (
           <>
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
               {visible.map((course) => <CourseCard key={course._id} course={course} />)}
@@ -514,7 +521,7 @@ const CTASection = () => (
 // ── MAIN HOMEPAGE ─────────────────────────────────────────────
 export default function HomePage() {
   
-  const { list: courses, loading: coursesLoading, fetchCourses } = useCourses();
+  const { list: courses, loading: coursesLoading, coursesError, fetchCourses } = useCourses();
   const { list: categories, fetchCategories } = useCategories();
   const [reviews, setReviews] = useState([]);
   const [faculty, setFaculty] = useState([]);
@@ -557,7 +564,12 @@ export default function HomePage() {
       <CategoriesSection categories={categories} />
 
       {/* 4. Featured courses with slider */}
-      <CourseSlider courses={courses} loading={coursesLoading} />
+      <CourseSlider
+        courses={courses}
+        loading={coursesLoading}
+        error={coursesError}
+        onRetry={() => fetchCourses({ limit: 12, sort: 'newest' })}
+      />
 
       {/* 5. Features / Why Us */}
       <FeaturesSection />

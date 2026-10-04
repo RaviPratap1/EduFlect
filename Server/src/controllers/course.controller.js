@@ -35,21 +35,32 @@ exports.getAllCourses = async (req, res) => {
         .limit(Number(limit)),
       Course.countDocuments(filter),
     ]);
-    const coursesWithRating = await Promise.all(
-      courses.map(async (course) => {
-        const ratings = await RatingAndReview.find({ course: course._id });
-        const avg = ratings.length
-          ? (
-              ratings.reduce((s, r) => s + r.rating, 0) / ratings.length
-            ).toFixed(1)
-          : 0;
+    const ratings = await RatingAndReview.find({
+      course: { $in: courses.map((course) => course._id) },
+    })
+      .select("course rating")
+      .lean();
+    const ratingStats = new Map();
+    ratings.forEach(({ course, rating }) => {
+      const key = course.toString();
+      const stats = ratingStats.get(key) || { sum: 0, count: 0 };
+      stats.sum += rating;
+      stats.count += 1;
+      ratingStats.set(key, stats);
+    });
+    const coursesWithRating = courses.map((course) => {
+        const stats = ratingStats.get(course._id.toString()) || {
+          sum: 0,
+          count: 0,
+        };
         const obj = course.toObject();
-        obj.averageRating = Number(avg);
-        obj.totalRatings = ratings.length;
+        obj.averageRating = stats.count
+          ? Number((stats.sum / stats.count).toFixed(1))
+          : 0;
+        obj.totalRatings = stats.count;
         obj.totalStudents = course.studentsEnrolled.length;
         return obj;
-      }),
-    );
+      });
     return res
       .status(200)
       .json({

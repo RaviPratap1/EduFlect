@@ -14,17 +14,32 @@ export function CourseProvider({ children }) {
   const [adminCourses, setAdminCourses] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [coursesError, setCoursesError] = useState(null);
 
   const fetchCourses = useCallback(async (params) => {
+    setLoading(true);
+    setCoursesError(null);
     try {
-      setLoading(true);
-      const { data } = await api.getCourses(params);
-      setList(data.data.courses);
-      setTotal(data.data.total);
-      setPages(data.data.pages);
-      setCurrentPage(data.data.page);
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to fetch courses');
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        try {
+          const { data } = await api.getCourses(params);
+          setList(data.data.courses);
+          setTotal(data.data.total);
+          setPages(data.data.pages);
+          setCurrentPage(data.data.page);
+          return true;
+        } catch (err) {
+          const status = err.response?.status;
+          const canRetry = !status || status === 429 || status >= 500;
+          if (attempt === 0 && canRetry) {
+            await new Promise((resolve) => setTimeout(resolve, 800));
+            continue;
+          }
+          setError(err.response?.data?.message || 'Failed to fetch courses');
+          setCoursesError('Courses could not be loaded. Please try again.');
+          return false;
+        }
+      }
     } finally { setLoading(false); }
   }, []);
 
@@ -111,7 +126,7 @@ export function CourseProvider({ children }) {
   };
 
   return (
-    <CourseContext.Provider value={{ list, total, pages, currentPage, selected, instructorCourses, adminCourses, loading, error, fetchCourses, fetchCourse, fetchInstructorCourses, fetchAdminCourses, createCourse, updateCourse, deleteCourse, togglePublish, setSelected }}>
+    <CourseContext.Provider value={{ list, total, pages, currentPage, selected, instructorCourses, adminCourses, loading, error, coursesError, fetchCourses, fetchCourse, fetchInstructorCourses, fetchAdminCourses, createCourse, updateCourse, deleteCourse, togglePublish, setSelected }}>
       {children}
     </CourseContext.Provider>
   );
