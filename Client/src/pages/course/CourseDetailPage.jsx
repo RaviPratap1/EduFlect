@@ -16,6 +16,9 @@ export default function CourseDetailPage() {
   const { isAuthenticated, user } = useAuth();
   const [expandedSection, setExpandedSection] = useState(null);
   const [buying, setBuying] = useState(false);
+  const effectivePrice = course
+    ? course.price - Math.round((course.price * (course.discount || 0)) / 100)
+    : 0;
 
   useEffect(() => {
     dispatch(fetchCourse(id));
@@ -28,6 +31,12 @@ export default function CourseDetailPage() {
     if (isEnrolled) return navigate(`/learn/${id}`);
     setBuying(true);
     try {
+      if (effectivePrice === 0) {
+        await api.enrollFreeCourse(id);
+        toast.success('Enrollment successful!');
+        navigate(`/learn/${id}`);
+        return;
+      }
       const { data } = await api.createOrder(id);
       const { orderId, amount, currency, keyId, courseName } = data.data;
       const options = {
@@ -57,7 +66,6 @@ export default function CourseDetailPage() {
   if (loading) return <Spinner size="lg" className="py-24" />;
   if (!course) return <div className="py-24 text-center text-gray-500">Course not found</div>;
 
-  const effectivePrice = course.price - Math.round((course.price * (course.discount || 0)) / 100);
   const totalLessons = course.sections?.reduce((s, sec) => s + (sec.subSections?.length || 0), 0) || 0;
 
   return (
@@ -84,11 +92,11 @@ export default function CourseDetailPage() {
 
       <div className="sticky bottom-0 z-40 flex items-center justify-between px-4 py-3 bg-white border-t border-gray-200 shadow-lg lg:hidden">
         <div>
-          <span className="text-2xl font-bold text-gray-900">₹{effectivePrice.toLocaleString()}</span>
+          <span className="text-2xl font-bold text-gray-900">{effectivePrice === 0 ? 'Free' : `₹${effectivePrice.toLocaleString()}`}</span>
           {course.discount > 0 && <span className="ml-2 text-sm text-gray-400 line-through">₹{course.price?.toLocaleString()}</span>}
         </div>
         <button onClick={handleBuy} disabled={buying} className="btn-primary px-6 py-2.5">
-          {isEnrolled ? 'Continue Learning' : buying ? 'Processing...' : 'Enroll Now'}
+          {isEnrolled ? 'Continue Learning' : buying ? 'Processing...' : effectivePrice === 0 ? 'Enroll for Free' : 'Enroll Now'}
         </button>
       </div>
 
@@ -168,15 +176,15 @@ const BuyCard = ({ course, effectivePrice, isEnrolled, buying, onBuy }) => (
     {course.thumbnail && <img src={course.thumbnail} alt={course.name} className="object-cover w-full aspect-video" />}
     <div className="p-5">
       <div className="flex items-center gap-3 mb-4">
-        <span className="text-3xl font-bold">₹{effectivePrice.toLocaleString()}</span>
+        <span className="text-3xl font-bold">{effectivePrice === 0 ? 'Free' : `₹${effectivePrice.toLocaleString()}`}</span>
         {course.discount > 0 && (
           <><span className="text-gray-400 line-through">₹{course.price?.toLocaleString()}</span><span className="text-red-600 bg-red-100 badge">{course.discount}% OFF</span></>
         )}
       </div>
       <button onClick={onBuy} disabled={buying} className="justify-center w-full py-3 mb-3 text-base btn-primary">
-        {isEnrolled ? '▶ Continue Learning' : buying ? 'Processing...' : '🎓 Enroll Now'}
+        {isEnrolled ? '▶ Continue Learning' : buying ? 'Processing...' : effectivePrice === 0 ? 'Enroll for Free' : '🎓 Enroll Now'}
       </button>
-      <p className="text-xs text-center text-gray-400">30-day money-back guarantee</p>
+      {effectivePrice > 0 && <p className="text-xs text-center text-gray-400">30-day money-back guarantee</p>}
       <div className="mt-4 space-y-2 text-sm text-gray-600">
         <p className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-500" /> Full lifetime access</p>
         <p className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-500" /> Certificate of completion</p>

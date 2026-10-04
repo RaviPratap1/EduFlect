@@ -1,5 +1,49 @@
 const CourseProgress = require("../models/courseProgress.model");
 const Course = require("../models/course.model");
+const User = require("../models/user.model");
+
+exports.enrollFreeCourse = async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    const userId = req.user._id;
+    const course = await Course.findById(courseId);
+    if (!course)
+      return res.status(404).json({ success: false, message: "Course not found" });
+    if (!course.isPublished)
+      return res.status(400).json({ success: false, message: "Course is not available for enrollment" });
+
+    const effectivePrice =
+      course.price - Math.round((course.price * (course.discount || 0)) / 100);
+    if (effectivePrice > 0)
+      return res.status(400).json({ success: false, message: "This course requires payment" });
+
+    const alreadyEnrolled = course.studentsEnrolled.some(
+      (studentId) => studentId.toString() === userId.toString(),
+    );
+    if (alreadyEnrolled)
+      return res.status(400).json({ success: false, message: "You are already enrolled in this course" });
+
+    await Promise.all([
+      Course.findByIdAndUpdate(courseId, { $addToSet: { studentsEnrolled: userId } }),
+      User.findByIdAndUpdate(userId, { $addToSet: { enrolledCourses: courseId } }),
+      CourseProgress.findOneAndUpdate(
+        { user: userId, course: courseId },
+        { user: userId, course: courseId },
+        { upsert: true, new: true },
+      ),
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      message: "Free course enrollment successful",
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: err.message || "Internal Server Error",
+    });
+  }
+};
 
 exports.getCourseProgress = async (req, res) => {
   try {

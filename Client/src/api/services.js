@@ -64,6 +64,7 @@ export const adminGetAllPayments = (params) => api.get('/payments/admin/all', { 
 
 // ── ENROLLMENT / PROGRESS ─────────────────────────────────────
 export const getMyEnrollments = () => api.get('/enrollments/my-courses');
+export const enrollFreeCourse = (courseId) => api.post(`/enrollments/free/${courseId}`);
 export const getCourseProgress = (courseId) => api.get(`/enrollments/progress/${courseId}`);
 export const markComplete = (data) => api.post('/enrollments/progress/complete', data);
 export const markIncomplete = (data) => api.post('/enrollments/progress/incomplete', data);
