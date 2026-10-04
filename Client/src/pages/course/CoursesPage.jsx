@@ -12,6 +12,7 @@ export default function CoursesPage() {
   const { list: categories } = useSelector((state) => state.categories);
 
   const [params] = useSearchParams();
+  const freeOnly = params.get('free') === 'true';
   const [search, setSearch] = useState(params.get('search') || '');
   const [category, setCategory] = useState(params.get('category') || '');
   const [sort, setSort] = useState('newest');
@@ -23,10 +24,11 @@ export default function CoursesPage() {
 
   useEffect(() => {
     const q = { page, sort, limit: 12 };
+    if (freeOnly) q.free = 'true';
     if (search) q.search = search;
     if (category) q.category = category;
     dispatch(fetchCourses(q));
-  }, [page, sort, category, dispatch]);
+  }, [page, sort, category, freeOnly, dispatch]);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -36,6 +38,7 @@ export default function CoursesPage() {
         page: 1,
         sort,
         limit: 12,
+        ...(freeOnly && { free: 'true' }),
         ...(search && { search }),
         ...(category && { category }),
       })
@@ -47,13 +50,13 @@ export default function CoursesPage() {
     setCategory('');
     setSort('newest');
     setPage(1);
-    dispatch(fetchCourses({ page: 1, sort: 'newest', limit: 12 }));
+    dispatch(fetchCourses({ page: 1, sort: 'newest', limit: 12, ...(freeOnly && { free: 'true' }) }));
   };
 
   return (
     <div className="px-4 py-8 mx-auto max-w-7xl sm:px-6 lg:px-8">
       <div className="mb-8">
-        <h1 className="mb-1 text-3xl font-bold">All Courses</h1>
+        <h1 className="mb-1 text-3xl font-bold">{freeOnly ? 'Free Courses' : 'All Courses'}</h1>
         <p className="text-gray-500">{total} courses available</p>
       </div>
       <div className="flex flex-col gap-3 mb-6 sm:flex-row">

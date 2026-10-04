@@ -76,7 +76,7 @@ const heroSlides = [
     desc: 'Lifetime access to all content. Learn anytime, anywhere, on any device. No deadlines, no pressure.',
     bg: 'from-orange-900 via-amber-800 to-yellow-900',
     accent: 'text-yellow-300',
-    cta: { label: 'Get Started Free', to: '/register' },
+    cta: { label: 'Get Started Free', to: '/courses?free=true' },
     stat: '4.8★ Average Rating',
   },
 ];
@@ -227,7 +227,7 @@ const categoryColors = [
   'hover:bg-cyan-50 hover:border-cyan-300',
 ];
 
-const CategoriesSection = ({ categories = [] }) => (
+const CategoriesSection = ({ categories = [], selectedCategory, onSelectCategory }) => (
   <section className="py-20 bg-white">
     <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
       <div className="mb-12 text-center">
@@ -237,11 +237,12 @@ const CategoriesSection = ({ categories = [] }) => (
       </div>
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
         {(categories ?? []).slice(0, 10).map((cat, i) => (
-          <Link key={cat._id} to={`/courses?category=${cat._id}`}
-            className={`flex flex-col items-center gap-3 p-5 rounded-2xl border-2 border-gray-100 transition-all duration-200 group ${categoryColors[i % categoryColors.length]}`}>
+          <button key={cat._id} type="button" onClick={() => onSelectCategory(cat._id)}
+            aria-pressed={selectedCategory === cat._id}
+            className={`flex flex-col items-center gap-3 p-5 rounded-2xl border-2 transition-all duration-200 group ${selectedCategory === cat._id ? 'border-primary-500 bg-primary-50' : `border-gray-100 ${categoryColors[i % categoryColors.length]}`}`}>
             <span className="text-3xl">{categoryIcons[i % categoryIcons.length]}</span>
             <span className="text-sm font-semibold leading-tight text-center text-gray-700 group-hover:text-gray-900">{cat.name}</span>
-          </Link>
+          </button>
         ))}
       </div>
     </div>
@@ -282,7 +283,7 @@ const FeaturesSection = () => (
 );
 
 // ── COURSE SLIDER ─────────────────────────────────────────────
-const CourseSlider = ({ courses = [], loading, error, onRetry }) => {
+const CourseSlider = ({ courses = [], loading, error, onRetry, selectedCategoryName, onClearCategory }) => {
   const totalPages = Math.max(1, Math.ceil((courses?.length ?? 0) / 4));
   const { current, prev, next, goTo } = useAutoSlider(totalPages, 3500);
   const itemsPerPage = 4;
@@ -290,15 +291,16 @@ const CourseSlider = ({ courses = [], loading, error, onRetry }) => {
   const visible = (courses ?? []).slice(start, start + itemsPerPage);
 
   return (
-    <section className="py-20 bg-white">
+    <section id="featured-courses" className="py-20 bg-white scroll-mt-20">
       <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
         <div className="flex items-end justify-between mb-12">
           <div>
             <span className="inline-block bg-primary-50 text-primary-700 text-sm font-semibold px-4 py-1.5 rounded-full mb-4">Trending Now</span>
-            <h2 className="mb-1 text-3xl font-black text-gray-900 sm:text-4xl">Featured Courses</h2>
-            <p className="text-gray-500">Handpicked by our expert team</p>
+            <h2 className="mb-1 text-3xl font-black text-gray-900 sm:text-4xl">{selectedCategoryName ? `${selectedCategoryName} Courses` : 'Featured Courses'}</h2>
+            <p className="text-gray-500">{selectedCategoryName ? `Courses in ${selectedCategoryName}` : 'Handpicked by our expert team'}</p>
           </div>
           <div className="items-center hidden gap-3 sm:flex">
+            {selectedCategoryName && <button onClick={onClearCategory} className="text-sm btn-secondary">All courses</button>}
             <button onClick={prev} className="flex items-center justify-center w-10 h-10 transition-colors border-2 border-gray-200 rounded-xl hover:border-primary-500 hover:text-primary-600">
               <ChevronLeft className="w-5 h-5" />
             </button>
@@ -501,7 +503,7 @@ const CTASection = () => (
           <h2 className="mb-4 text-3xl font-black text-white sm:text-5xl">Ready to Transform Your Career?</h2>
           <p className="max-w-xl mx-auto mb-10 text-lg text-gray-400">Join 10,000+ students who chose EduFlect to build real skills and land better jobs.</p>
           <div className="flex flex-wrap justify-center gap-4">
-            <Link to="/register"
+            <Link to="/courses?free=true"
               className="group bg-primary-600 hover:bg-primary-700 text-white font-bold px-8 py-4 rounded-2xl transition-all duration-200 flex items-center gap-2 shadow-xl shadow-primary-900/30 hover:-translate-y-0.5">
               Get Started Free
               <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
@@ -523,6 +525,7 @@ export default function HomePage() {
   
   const { list: courses, loading: coursesLoading, coursesError, fetchCourses } = useCourses();
   const { list: categories, fetchCategories } = useCategories();
+  const [selectedCategory, setSelectedCategory] = useState('');
   const [reviews, setReviews] = useState([]);
   const [faculty, setFaculty] = useState([]);
   console.log("review", reviews);
@@ -551,6 +554,21 @@ export default function HomePage() {
   const avgRating = reviews.length
     ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
     : '4.8';
+  const selectedCategoryName = categories.find((category) => category._id === selectedCategory)?.name;
+
+  const selectCategory = (categoryId) => {
+    const nextCategory = selectedCategory === categoryId ? '' : categoryId;
+    setSelectedCategory(nextCategory);
+    fetchCourses({ limit: 12, sort: 'newest', ...(nextCategory && { category: nextCategory }) });
+    requestAnimationFrame(() => {
+      document.getElementById('featured-courses')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  };
+
+  const clearCategory = () => {
+    setSelectedCategory('');
+    fetchCourses({ limit: 12, sort: 'newest' });
+  };
 
   return (
     <div>
@@ -561,14 +579,21 @@ export default function HomePage() {
       <StatsBar avgRating={avgRating} />
 
       {/* 3. Categories */}
-      <CategoriesSection categories={categories} />
+      <CategoriesSection
+        categories={categories}
+        selectedCategory={selectedCategory}
+        onSelectCategory={selectCategory}
+      />
 
       {/* 4. Featured courses with slider */}
       <CourseSlider
+        key={selectedCategory || 'all-courses'}
         courses={courses}
         loading={coursesLoading}
         error={coursesError}
-        onRetry={() => fetchCourses({ limit: 12, sort: 'newest' })}
+        onRetry={() => fetchCourses({ limit: 12, sort: 'newest', ...(selectedCategory && { category: selectedCategory }) })}
+        selectedCategoryName={selectedCategoryName}
+        onClearCategory={clearCategory}
       />
 
       {/* 5. Features / Why Us */}

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
 import * as api from '../api/services';
 import toast from 'react-hot-toast';
 
@@ -15,20 +15,24 @@ export function CourseProvider({ children }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [coursesError, setCoursesError] = useState(null);
+  const courseRequestId = useRef(0);
 
   const fetchCourses = useCallback(async (params) => {
+    const requestId = ++courseRequestId.current;
     setLoading(true);
     setCoursesError(null);
     try {
       for (let attempt = 0; attempt < 2; attempt += 1) {
         try {
           const { data } = await api.getCourses(params);
+          if (requestId !== courseRequestId.current) return false;
           setList(data.data.courses);
           setTotal(data.data.total);
           setPages(data.data.pages);
           setCurrentPage(data.data.page);
           return true;
         } catch (err) {
+          if (requestId !== courseRequestId.current) return false;
           const status = err.response?.status;
           const canRetry = !status || status === 429 || status >= 500;
           if (attempt === 0 && canRetry) {
@@ -40,7 +44,9 @@ export function CourseProvider({ children }) {
           return false;
         }
       }
-    } finally { setLoading(false); }
+    } finally {
+      if (requestId === courseRequestId.current) setLoading(false);
+    }
   }, []);
 
   const fetchCourse = useCallback(async (id) => {

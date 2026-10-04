@@ -11,6 +11,7 @@ exports.getAllCourses = async (req, res) => {
     const {
       category,
       search,
+      free,
       sort = "newest",
       page = 1,
       limit = 12,
@@ -18,6 +19,26 @@ exports.getAllCourses = async (req, res) => {
     const filter = { isPublished: true };
     if (category) filter.category = category;
     if (search) filter.name = { $regex: search, $options: "i" };
+    if (free === "true") {
+      const discountAmount = {
+        $floor: {
+          $add: [
+            {
+              $divide: [
+                {
+                  $multiply: ["$price", { $ifNull: ["$discount", 0] }],
+                },
+                100,
+              ],
+            },
+            0.5,
+          ],
+        },
+      };
+      filter.$expr = {
+        $eq: [{ $subtract: ["$price", discountAmount] }, 0],
+      };
+    }
     const sortMap = {
       newest: { createdAt: -1 },
       oldest: { createdAt: 1 },
