@@ -1,4 +1,4 @@
-const { ZodError } = require('zod');
+const { ZodError } = require("zod");
 
 exports.validate = (schema) => (req, res, next) => {
   try {
@@ -11,17 +11,19 @@ exports.validate = (schema) => (req, res, next) => {
     req.body = validated.body;
     req.params = validated.params;
     req.query = validated.query;
+
     next();
   } catch (err) {
     if (err instanceof ZodError) {
-      const message = err.errors
-        .map((error) => {
-          const path = error.path.join('.') || 'input';
-          return `${path}: ${error.message}`;
-        })
-        .join(', ');
-      return res.status(400).json({ success: false, message });
+      return res.status(400).json({
+        success: false,
+        errors: err.issues.map((issue) => ({
+          field: issue.path.join("."),
+          message: issue.message,
+        })),
+      });
     }
+
     next(err);
   }
 };

@@ -47,13 +47,11 @@ exports.registerUser = async (req, res) => {
       const otp = generateOTP();
       await saveOTP(email, otp, "email_verify");
       await sendOtpEmail(email, existingUser.firstName, otp);
-      return res
-        .status(200)
-        .json({
-          success: true,
-          message:
-            "Existing unverified user found - OTP has been resent to your email",
-        });
+      return res.status(200).json({
+        success: true,
+        message:
+          "Existing unverified user found - OTP has been resent to your email",
+      });
     }
 
     if (!existingUser) {
@@ -74,24 +72,20 @@ exports.registerUser = async (req, res) => {
     await saveOTP(email, otp, "email_verify");
     await sendOtpEmail(email, user.firstName, otp);
 
-    return res
-      .status(201)
-      .json({
-        success: true,
-        message:
-          "OTP has been sent to your email - please verify within 10 minutes",
-      });
+    return res.status(201).json({
+      success: true,
+      message:
+        "OTP has been sent to your email - please verify within 10 minutes",
+    });
   } catch (err) {
     if (err.code === 11000)
       return res
         .status(409)
         .json({ success: false, message: "Email already exists" });
-    return res
-      .status(500)
-      .json({
-        success: false,
-        message: err.message || "Internal Server Error",
-      });
+    return res.status(500).json({
+      success: false,
+      message: err.message || "Internal Server Error",
+    });
   }
 };
 
@@ -117,19 +111,15 @@ exports.verifyOtp = async (req, res) => {
     await user.save();
     await sendWelcomeEmail(email, user.firstName);
 
-    return res
-      .status(200)
-      .json({
-        success: true,
-        message: "Email verified successfully! You can now login",
-      });
+    return res.status(200).json({
+      success: true,
+      message: "Email verified successfully! You can now login",
+    });
   } catch (err) {
-    return res
-      .status(500)
-      .json({
-        success: false,
-        message: err.message || "Internal Server Error",
-      });
+    return res.status(500).json({
+      success: false,
+      message: err.message || "Internal Server Error",
+    });
   }
 };
 
@@ -155,12 +145,10 @@ exports.resendOtp = async (req, res) => {
       .status(200)
       .json({ success: true, message: "New OTP has been sent to your email" });
   } catch (err) {
-    return res
-      .status(500)
-      .json({
-        success: false,
-        message: err.message || "Internal Server Error",
-      });
+    return res.status(500).json({
+      success: false,
+      message: err.message || "Internal Server Error",
+    });
   }
 };
 
@@ -206,12 +194,10 @@ exports.loginUser = async (req, res) => {
       },
     });
   } catch (err) {
-    return res
-      .status(500)
-      .json({
-        success: false,
-        message: err.message || "Internal Server Error",
-      });
+    return res.status(500).json({
+      success: false,
+      message: err.message || "Internal Server Error",
+    });
   }
 };
 
@@ -220,32 +206,26 @@ exports.refreshToken = async (req, res) => {
   try {
     const token = req.cookies.refreshToken;
     if (!token)
-      return res
-        .status(401)
-        .json({
-          success: false,
-          message: "Refresh token not found - please login again",
-        });
+      return res.status(401).json({
+        success: false,
+        message: "Refresh token not found - please login again",
+      });
 
     const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
     const user = await User.findById(decoded.id).select("+refreshToken");
     if (!user || user.refreshToken !== token) {
-      return res
-        .status(401)
-        .json({
-          success: false,
-          message: "Invalid refresh token - please login again",
-        });
+      return res.status(401).json({
+        success: false,
+        message: "Invalid refresh token - please login again",
+      });
     }
 
     const accessToken = generateAccessToken(user);
-    return res
-      .status(200)
-      .json({
-        success: true,
-        message: "Token refreshed successfully",
-        data: { accessToken },
-      });
+    return res.status(200).json({
+      success: true,
+      message: "Token refreshed successfully",
+      data: { accessToken },
+    });
   } catch (err) {
     return res
       .status(401)
@@ -266,12 +246,10 @@ exports.logoutUser = async (req, res) => {
       .status(200)
       .json({ success: true, message: "Logout successful" });
   } catch (err) {
-    return res
-      .status(500)
-      .json({
-        success: false,
-        message: err.message || "Internal Server Error",
-      });
+    return res.status(500).json({
+      success: false,
+      message: err.message || "Internal Server Error",
+    });
   }
 };
 
@@ -285,19 +263,15 @@ exports.forgotPassword = async (req, res) => {
       await saveOTP(email, otp, "password_reset");
       await sendOtpEmail(email, user.firstName, otp);
     }
-    return res
-      .status(200)
-      .json({
-        success: true,
-        message: "If the email is registered, password reset OTP has been sent",
-      });
+    return res.status(200).json({
+      success: true,
+      message: "If the email is registered, password reset OTP has been sent",
+    });
   } catch (err) {
-    return res
-      .status(500)
-      .json({
-        success: false,
-        message: err.message || "Internal Server Error",
-      });
+    return res.status(500).json({
+      success: false,
+      message: err.message || "Internal Server Error",
+    });
   }
 };
 
@@ -320,19 +294,15 @@ exports.resetPassword = async (req, res) => {
     await user.save();
     res.clearCookie("refreshToken");
 
-    return res
-      .status(200)
-      .json({
-        success: true,
-        message: "Password reset successfully! You can now login",
-      });
+    return res.status(200).json({
+      success: true,
+      message: "Password reset successfully! You can now login",
+    });
   } catch (err) {
-    return res
-      .status(500)
-      .json({
-        success: false,
-        message: err.message || "Internal Server Error",
-      });
+    return res.status(500).json({
+      success: false,
+      message: err.message || "Internal Server Error",
+    });
   }
 };
 
@@ -356,34 +326,27 @@ exports.changePassword = async (req, res) => {
 
     const isSame = await bcrypt.compare(newPassword, user.password);
     if (isSame)
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "New password must be different from old password",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "New password must be different from old password",
+      });
 
     user.password = await bcrypt.hash(newPassword, 12);
     user.refreshToken = null;
     await user.save();
     res.clearCookie("refreshToken");
 
-    return res
-      .status(200)
-      .json({
-        success: true,
-        message: "Password changed successfully! Please login again",
-      });
+    return res.status(200).json({
+      success: true,
+      message: "Password changed successfully! Please login again",
+    });
   } catch (err) {
-    return res
-      .status(500)
-      .json({
-        success: false,
-        message: err.message || "Internal Server Error",
-      });
+    return res.status(500).json({
+      success: false,
+      message: err.message || "Internal Server Error",
+    });
   }
 };
-
 
 // 10. GET ME
 exports.getMe = async (req, res) => {
@@ -397,11 +360,10 @@ exports.getMe = async (req, res) => {
       .status(200)
       .json({ success: true, message: "User data", data: user });
   } catch (err) {
-    return res
-      .status(500)
-      .json({
-        success: false,
-        message: err.message || "Internal Server Error",
-      });
+    return res.status(500).json({
+      success: false,
+      message: err.message || "Internal Server Error",
+    });
   }
 };
+  

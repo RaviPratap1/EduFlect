@@ -1,51 +1,68 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import { Search, X, BookOpen } from 'lucide-react';
-import { useCourses } from '../../context/CourseContext';
-import { useCategories } from '../../context/CategoryContext';
+import { fetchCourses } from '../../store/slices/courseSlice';
+import { fetchCategories } from '../../store/slices/categorySlice';
 import { CourseCard, Spinner, EmptyState } from '../../components/common/index.jsx';
 
 export default function CoursesPage() {
-  const { list, loading, total, pages, fetchCourses } = useCourses();
-  const { list: categories, fetchCategories } = useCategories();
+  const dispatch = useDispatch();
+  const { list, loading, total, pages } = useSelector((state) => state.courses);
+  const { list: categories } = useSelector((state) => state.categories);
+
   const [params] = useSearchParams();
   const [search, setSearch] = useState(params.get('search') || '');
   const [category, setCategory] = useState(params.get('category') || '');
   const [sort, setSort] = useState('newest');
   const [page, setPage] = useState(1);
 
-  useEffect(() => { fetchCategories(); }, []);
+  useEffect(() => {
+    dispatch(fetchCategories());
+  }, [dispatch]);
+
   useEffect(() => {
     const q = { page, sort, limit: 12 };
     if (search) q.search = search;
     if (category) q.category = category;
-    fetchCourses(q);
-  }, [page, sort, category]);
+    dispatch(fetchCourses(q));
+  }, [page, sort, category, dispatch]);
 
   const handleSearch = (e) => {
     e.preventDefault();
     setPage(1);
-    fetchCourses({ page: 1, sort, limit: 12, ...(search && { search }), ...(category && { category }) });
+    dispatch(
+      fetchCourses({
+        page: 1,
+        sort,
+        limit: 12,
+        ...(search && { search }),
+        ...(category && { category }),
+      })
+    );
   };
 
   const clearFilters = () => {
-    setSearch(''); setCategory(''); setSort('newest'); setPage(1);
-    fetchCourses({ page: 1, sort: 'newest', limit: 12 });
+    setSearch('');
+    setCategory('');
+    setSort('newest');
+    setPage(1);
+    dispatch(fetchCourses({ page: 1, sort: 'newest', limit: 12 }));
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="px-4 py-8 mx-auto max-w-7xl sm:px-6 lg:px-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-1">All Courses</h1>
+        <h1 className="mb-1 text-3xl font-bold">All Courses</h1>
         <p className="text-gray-500">{total} courses available</p>
       </div>
-      <div className="flex flex-col sm:flex-row gap-3 mb-6">
-        <form onSubmit={handleSearch} className="flex-1 flex gap-2">
+      <div className="flex flex-col gap-3 mb-6 sm:flex-row">
+        <form onSubmit={handleSearch} className="flex flex-1 gap-2">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute w-4 h-4 text-gray-400 -translate-y-1/2 left-3 top-1/2" />
             <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search courses..." className="input-field pl-9" />
           </div>
-          <button type="submit" className="btn-primary px-4">Search</button>
+          <button type="submit" className="px-4 btn-primary">Search</button>
         </form>
         <select value={category} onChange={(e) => { setCategory(e.target.value); setPage(1); }} className="input-field sm:w-44">
           <option value="">All Categories</option>
@@ -58,7 +75,7 @@ export default function CoursesPage() {
           <option value="price_desc">Price: High</option>
         </select>
         {(search || category) && (
-          <button onClick={clearFilters} className="btn-secondary text-sm flex items-center gap-1">
+          <button onClick={clearFilters} className="flex items-center gap-1 text-sm btn-secondary">
             <X className="w-4 h-4" /> Clear
           </button>
         )}
@@ -67,16 +84,16 @@ export default function CoursesPage() {
         <EmptyState icon={BookOpen} title="No courses found" description="Try different search terms or filters" />
       ) : (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {list.map((course) => <CourseCard key={course._id} course={course} />)}
           </div>
           {pages > 1 && (
             <div className="flex justify-center gap-2 mt-10">
-              <button disabled={page === 1} onClick={() => setPage((p) => p - 1)} className="btn-secondary px-4 py-2 text-sm disabled:opacity-40">Prev</button>
+              <button disabled={page === 1} onClick={() => setPage((p) => p - 1)} className="px-4 py-2 text-sm btn-secondary disabled:opacity-40">Prev</button>
               {Array.from({ length: pages }, (_, i) => i + 1).map((p) => (
                 <button key={p} onClick={() => setPage(p)} className={`w-9 h-9 rounded-lg text-sm font-medium transition-colors ${p === page ? 'bg-primary-600 text-white' : 'bg-white border border-gray-200 hover:bg-gray-50'}`}>{p}</button>
               ))}
-              <button disabled={page === pages} onClick={() => setPage((p) => p + 1)} className="btn-secondary px-4 py-2 text-sm disabled:opacity-40">Next</button>
+              <button disabled={page === pages} onClick={() => setPage((p) => p + 1)} className="px-4 py-2 text-sm btn-secondary disabled:opacity-40">Next</button>
             </div>
           )}
         </>

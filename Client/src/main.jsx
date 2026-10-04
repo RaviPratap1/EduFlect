@@ -6,6 +6,10 @@ import { AuthProvider } from './context/AuthContext';
 import { CourseProvider } from './context/CourseContext';
 import { CategoryProvider } from './context/CategoryContext';
 import { EnrollmentProvider } from './context/EnrollmentContext';
+
+import { Provider } from 'react-redux';
+import { store } from './store/store';
+
 import App from './App';
 import './index.css';
 
@@ -14,12 +18,14 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <BrowserRouter>
       <AuthProvider>
         <CourseProvider>
+           <Provider store={store}>
           <CategoryProvider>
             <EnrollmentProvider>
               <App />
               <Toaster position="top-right" toastOptions={{ duration: 3000, style: { borderRadius: '10px', background: '#1e1e2e', color: '#fff' } }} />
             </EnrollmentProvider>
           </CategoryProvider>
+          </Provider>
         </CourseProvider>
       </AuthProvider>
     </BrowserRouter>
