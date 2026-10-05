@@ -1,0 +1,48 @@
+# Root folder (EduFlect-testing-k6/) me rakho
+services:
+  # ---------- 1. DATABASE ----------
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    volumes:
+      - mongo_data:/data/db          # container delete ho to bhi data bacha rahe
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ---------- 2. BACKEND ----------
+  server:
+    build: ./Server
+    restart: unless-stopped
+    env_file: ./Server/.env           # JWT, Cloudinary, Resend, Razorpay keys yaha se
+    environment:
+      PORT: 3000
+      MONGO_URI: mongodb://mongo:27017/eduflect   # Atlas ki jagah docker wala mongo
+      CLIENT_URL: ${CLIENT_URL:-http://localhost:5173}   # CORS: browser jis URL se app kholega wahi
+    ports:
+      - "3000:3000"
+    depends_on:
+      mongo:
+        condition: service_healthy    # mongo ready hone ke baad hi server start
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---------- 3. FRONTEND ----------
+  client:
+    build:
+      context: ./Client
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:3000}   # BROWSER isko call karega
+    restart: unless-stopped
+    ports:
+      - "5173:80"                     # 5173 isliye, kyunki backend CORS me yahi allowed hai
+    depends_on:
+      - server
+
+volumes:
+  mongo_data:
