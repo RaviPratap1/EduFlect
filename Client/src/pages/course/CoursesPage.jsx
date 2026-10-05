@@ -91,7 +91,7 @@ export default function CoursesPage() {
             {list.map((course) => <CourseCard key={course._id} course={course} />)}
           </div>
           {pages > 1 && (
-            <div className="flex justify-center gap-2 mt-10">
+            <div className="flex flex-wrap justify-center gap-2 mt-10">
               <button disabled={page === 1} onClick={() => setPage((p) => p - 1)} className="px-4 py-2 text-sm btn-secondary disabled:opacity-40">Prev</button>
               {Array.from({ length: pages }, (_, i) => i + 1).map((p) => (
                 <button key={p} onClick={() => setPage(p)} className={`w-9 h-9 rounded-lg text-sm font-medium transition-colors ${p === page ? 'bg-primary-600 text-white' : 'bg-white border border-gray-200 hover:bg-gray-50'}`}>{p}</button>

@@ -1,24 +1,21 @@
 const Course = require("../models/course.model");
 const Category = require("../models/category.model");
 const RatingAndReview = require("../models/ratingAndReview.model");
-const {
-  uploadOnCloudinary,
-  deleteFromCloudinary,
-} = require("../services/cloudinary.service");
+const {uploadOnCloudinary,deleteFromCloudinary,} = require("../services/cloudinary.service");
 
 exports.getAllCourses = async (req, res) => {
   try {
-    const {
-      category,
-      search,
-      free,
-      sort = "newest",
-      page = 1,
-      limit = 12,
-    } = req.query;
+    const {category,search,free,sort = "newest",page = 1, limit = 10,} = req.query;
+
+
     const filter = { isPublished: true };
+
+
     if (category) filter.category = category;
+
+    
     if (search) filter.name = { $regex: search, $options: "i" };
+    
     if (free === "true") {
       const discountAmount = {
         $floor: {
@@ -39,13 +36,19 @@ exports.getAllCourses = async (req, res) => {
         $eq: [{ $subtract: ["$price", discountAmount] }, 0],
       };
     }
+
+
     const sortMap = {
       newest: { createdAt: -1 },
       oldest: { createdAt: 1 },
       price_asc: { price: 1 },
       price_desc: { price: -1 },
     };
+
+
     const skip = (Number(page) - 1) * Number(limit);
+
+
     const [courses, total] = await Promise.all([
       Course.find(filter)
         .populate("instructor", "firstName lastName profile")
@@ -54,13 +57,18 @@ exports.getAllCourses = async (req, res) => {
         .sort(sortMap[sort] || sortMap.newest)
         .skip(skip)
         .limit(Number(limit)),
+
       Course.countDocuments(filter),
     ]);
+
+
     const ratings = await RatingAndReview.find({
       course: { $in: courses.map((course) => course._id) },
     })
       .select("course rating")
       .lean();
+
+
     const ratingStats = new Map();
     ratings.forEach(({ course, rating }) => {
       const key = course.toString();
@@ -69,38 +77,38 @@ exports.getAllCourses = async (req, res) => {
       stats.count += 1;
       ratingStats.set(key, stats);
     });
+
+
     const coursesWithRating = courses.map((course) => {
-        const stats = ratingStats.get(course._id.toString()) || {
-          sum: 0,
-          count: 0,
-        };
-        const obj = course.toObject();
-        obj.averageRating = stats.count
-          ? Number((stats.sum / stats.count).toFixed(1))
-          : 0;
-        obj.totalRatings = stats.count;
-        obj.totalStudents = course.studentsEnrolled.length;
-        return obj;
-      });
-    return res
-      .status(200)
-      .json({
-        success: true,
-        message: "Courses fetched",
-        data: {
-          courses: coursesWithRating,
-          total,
-          page: Number(page),
-          pages: Math.ceil(total / Number(limit)),
-        },
-      });
+      const stats = ratingStats.get(course._id.toString()) || {
+        sum: 0,
+        count: 0,
+      };
+
+      
+      const obj = course.toObject();
+      obj.averageRating = stats.count
+        ? Number((stats.sum / stats.count).toFixed(1))
+        : 0;
+      obj.totalRatings = stats.count;
+      obj.totalStudents = course.studentsEnrolled.length;
+      return obj;
+    });
+    return res.status(200).json({
+      success: true,
+      message: "Courses fetched",
+      data: {
+        courses: coursesWithRating,
+        total,
+        page: Number(page),
+        pages: Math.ceil(total / Number(limit)),
+      },
+    });
   } catch (err) {
-    return res
-      .status(500)
-      .json({
-        success: false,
-        message: err.message || "Internal Server Error",
-      });
+    return res.status(500).json({
+      success: false,
+      message: err.message || "Internal Server Error",
+    });
   }
 };
 
@@ -135,12 +143,10 @@ exports.getCourse = async (req, res) => {
       .status(200)
       .json({ success: true, message: "Course fetched", data: courseObj });
   } catch (err) {
-    return res
-      .status(500)
-      .json({
-        success: false,
-        message: err.message || "Internal Server Error",
-      });
+    return res.status(500).json({
+      success: false,
+      message: err.message || "Internal Server Error",
+    });
   }
 };
 
@@ -167,20 +173,16 @@ exports.getInstructorCourses = async (req, res) => {
         return obj;
       }),
     );
-    return res
-      .status(200)
-      .json({
-        success: true,
-        message: "Courses fetched",
-        data: coursesWithStats,
-      });
+    return res.status(200).json({
+      success: true,
+      message: "Courses fetched",
+      data: coursesWithStats,
+    });
   } catch (err) {
-    return res
-      .status(500)
-      .json({
-        success: false,
-        message: err.message || "Internal Server Error",
-      });
+    return res.status(500).json({
+      success: false,
+      message: err.message || "Internal Server Error",
+    });
   }
 };
 
@@ -225,20 +227,16 @@ exports.createCourse = async (req, res) => {
       whatYouWillLearn: whatYouWillLearn ? JSON.parse(whatYouWillLearn) : [],
       requirements: requirements ? JSON.parse(requirements) : [],
     });
-    return res
-      .status(201)
-      .json({
-        success: true,
-        message: "Course created successfully",
-        data: course,
-      });
+    return res.status(201).json({
+      success: true,
+      message: "Course created successfully",
+      data: course,
+    });
   } catch (err) {
-    return res
-      .status(500)
-      .json({
-        success: false,
-        message: err.message || "Internal Server Error",
-      });
+    return res.status(500).json({
+      success: false,
+      message: err.message || "Internal Server Error",
+    });
   }
 };
 
@@ -254,12 +252,10 @@ exports.updateCourse = async (req, res) => {
       req.user.role !== "admin" &&
       course.instructor.toString() !== req.user._id.toString()
     ) {
-      return res
-        .status(403)
-        .json({
-          success: false,
-          message: "You don't have permission to update this course",
-        });
+      return res.status(403).json({
+        success: false,
+        message: "You don't have permission to update this course",
+      });
     }
     const {
       name,
@@ -299,12 +295,10 @@ exports.updateCourse = async (req, res) => {
       .status(200)
       .json({ success: true, message: "Course updated", data: course });
   } catch (err) {
-    return res
-      .status(500)
-      .json({
-        success: false,
-        message: err.message || "Internal Server Error",
-      });
+    return res.status(500).json({
+      success: false,
+      message: err.message || "Internal Server Error",
+    });
   }
 };
 
@@ -320,24 +314,20 @@ exports.deleteCourse = async (req, res) => {
       req.user.role !== "admin" &&
       course.instructor.toString() !== req.user._id.toString()
     ) {
-      return res
-        .status(403)
-        .json({
-          success: false,
-          message: "You don't have permission to delete this course",
-        });
+      return res.status(403).json({
+        success: false,
+        message: "You don't have permission to delete this course",
+      });
     }
     if (course.thumbnailPublicId)
       await deleteFromCloudinary(course.thumbnailPublicId);
     await Course.findByIdAndDelete(courseId);
     return res.status(200).json({ success: true, message: "Course deleted" });
   } catch (err) {
-    return res
-      .status(500)
-      .json({
-        success: false,
-        message: err.message || "Internal Server Error",
-      });
+    return res.status(500).json({
+      success: false,
+      message: err.message || "Internal Server Error",
+    });
   }
 };
 
@@ -359,20 +349,16 @@ exports.togglePublish = async (req, res) => {
     }
     course.isPublished = !course.isPublished;
     await course.save();
-    return res
-      .status(200)
-      .json({
-        success: true,
-        message: `Course ${course.isPublished ? "published" : "unpublished"}`,
-        data: { isPublished: course.isPublished },
-      });
+    return res.status(200).json({
+      success: true,
+      message: `Course ${course.isPublished ? "published" : "unpublished"}`,
+      data: { isPublished: course.isPublished },
+    });
   } catch (err) {
-    return res
-      .status(500)
-      .json({
-        success: false,
-        message: err.message || "Internal Server Error",
-      });
+    return res.status(500).json({
+      success: false,
+      message: err.message || "Internal Server Error",
+    });
   }
 };
 
@@ -386,11 +372,9 @@ exports.adminGetAllCourses = async (req, res) => {
       .status(200)
       .json({ success: true, message: "All courses fetched", data: courses });
   } catch (err) {
-    return res
-      .status(500)
-      .json({
-        success: false,
-        message: err.message || "Internal Server Error",
-      });
+    return res.status(500).json({
+      success: false,
+      message: err.message || "Internal Server Error",
+    });
   }
 };
